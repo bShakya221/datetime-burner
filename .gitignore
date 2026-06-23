@@ -17,3 +17,7 @@
 Thumbs.db
 .vscode/
 .idea/
+
+# Agent / tool configs
+.impeccable/
+.superpowers/

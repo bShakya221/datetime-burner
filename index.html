@@ -12,7 +12,8 @@
   <!-- Google Fonts for premium icons and fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
   <div id="app">
@@ -22,8 +23,11 @@
         <span class="icon">📷</span>
         <h1>RetroStamp <span class="badge">PRO</span></h1>
       </div>
-      <div class="status-indicator">
-        <span id="queue-status">No files loaded</span>
+      <div class="header-actions">
+        <button id="theme-toggle-btn" class="secondary-btn btn-sm btn-icon" title="Toggle Light/Dark Theme">☀️</button>
+        <div class="status-indicator">
+          <span id="queue-status">No files loaded</span>
+        </div>
       </div>
     </header>
 
@@ -92,6 +96,8 @@
 
         <!-- Scrollable settings container -->
         <div class="settings-scroll-area">
+
+
           
           <!-- Text Value Settings -->
           <fieldset class="settings-fieldset">

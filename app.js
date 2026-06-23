@@ -127,6 +127,14 @@ window.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
   applyPreset('coolpix-w300');
   
+  // Theme initialization
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  if (savedTheme === 'light') {
+    document.documentElement.classList.add('light-theme');
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    if (themeBtn) themeBtn.textContent = '🌙';
+  }
+  
   // Set default custom date to current local time
   const now = new Date();
   const offset = now.getTimezoneOffset() * 60000;
@@ -227,6 +235,16 @@ function setupEventListeners() {
     zoomMode = '100';
     updateZoomUI();
   });
+
+  // Theme Toggle Actions
+  const themeToggleBtn = document.getElementById('theme-toggle-btn');
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+      const isLight = document.documentElement.classList.toggle('light-theme');
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      themeToggleBtn.textContent = isLight ? '🌙' : '☀️';
+    });
+  }
 
   // Action Triggers
   downloadCurrentBtn.addEventListener('click', burnAndDownloadCurrent);
