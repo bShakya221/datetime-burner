@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retro Photo Timestamp Burner</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Load exifr library to parse EXIF tags in browser -->
+  <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
+  <!-- Load jszip library to create zip files in browser -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <!-- Google Fonts for premium icons and fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo">
+        <span class="icon">📷</span>
+        <h1>RetroStamp <span class="badge">PRO</span></h1>
+      </div>
+      <div class="status-indicator">
+        <span id="queue-status">No files loaded</span>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="app-container">
+      <!-- Left Column: File Queue -->
+      <section class="queue-panel glass-panel">
+        <h2 class="panel-title">Upload Queue</h2>
+        
+        <!-- Upload Dropzone -->
+        <div id="dropzone" class="dropzone">
+          <input type="file" id="file-input" multiple accept="image/jpeg,image/png" class="file-input">
+          <div class="dropzone-content">
+            <span class="upload-icon">📤</span>
+            <p>Drag & Drop images or <span class="browse-link">Browse</span></p>
+            <span class="subtext">Supports JPEG and PNG files</span>
+          </div>
+        </div>
+
+        <!-- File List -->
+        <div id="file-list" class="file-list">
+          <div class="empty-state">
+            <p>Queue is empty</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Center Column: Preview Canvas -->
+      <section class="preview-panel glass-panel">
+        <h2 class="panel-title">Live Preview</h2>
+        <div class="canvas-container">
+          <div id="preview-wrapper" class="preview-wrapper">
+            <canvas id="preview-canvas"></canvas>
+            <div id="canvas-loader" class="loader-overlay hidden">
+              <div class="spinner"></div>
+              <p>Processing...</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="preview-actions">
+          <button id="zoom-fit-btn" class="secondary-btn btn-sm">Zoom to Fit</button>
+          <button id="zoom-100-btn" class="secondary-btn btn-sm">100% Zoom</button>
+          <div class="zoom-indicator"><span id="zoom-factor">100</span>%</div>
+        </div>
+      </section>
+
+      <!-- Right Column: Settings Control Panel -->
+      <section class="settings-panel glass-panel">
+        <h2 class="panel-title">Timestamp Settings</h2>
+        
+        <div class="control-group preset-manager-group">
+          <label class="control-label">Style Preset</label>
+          <div class="preset-selector-row">
+            <select id="preset-select" class="form-select">
+              <option value="coolpix-w300">Nikon COOLPIX W300 (Default)</option>
+              <option value="retro-orange">Retro Orange (Aliased)</option>
+              <option value="classic-yellow">Classic Yellow Film</option>
+              <option value="minimalist-white">Minimalist White</option>
+              <option value="custom" disabled>-- Custom Presets --</option>
+            </select>
+            <button id="save-preset-btn" class="secondary-btn btn-icon" title="Save current settings as preset">💾</button>
+            <button id="reset-preset-btn" class="secondary-btn btn-icon" title="Reset to preset defaults">🔄</button>
+          </div>
+        </div>
+
+        <!-- Scrollable settings container -->
+        <div class="settings-scroll-area">
+          
+          <!-- Text Value Settings -->
+          <fieldset class="settings-fieldset">
+            <legend>Text & Date Format</legend>
+            
+            <div class="control-group">
+              <label for="text-format-input" class="control-label">Format Template</label>
+              <input type="text" id="text-format-input" class="form-input" value="{MM}.{DD}.{YYYY} {HH}:{mm}">
+              <div class="input-tips">
+                Tags: <code>{MM}</code> <code>{DD}</code> <code>{YYYY}</code> <code>{HH}</code> <code>{mm}</code> <code>{ss}</code>
+              </div>
+            </div>
+
+            <div class="control-group checkbox-row">
+              <input type="checkbox" id="override-date-check">
+              <label for="override-date-check" class="control-label inline">Override original EXIF date</label>
+            </div>
+
+            <div id="custom-date-container" class="control-group hidden">
+              <label for="custom-date-input" class="control-label">Custom Date/Time</label>
+              <input type="datetime-local" id="custom-date-input" class="form-input">
+            </div>
+          </fieldset>
+
+          <!-- Typography & Rendering -->
+          <fieldset class="settings-fieldset">
+            <legend>Font & Render Style</legend>
+
+            <div class="control-group">
+              <label for="font-family-select" class="control-label">Font Family</label>
+              <select id="font-family-select" class="form-select">
+                <option value="Arial">Arial (Recommended)</option>
+                <option value="Tahoma">Tahoma</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Consolas">Consolas</option>
+                <option value="Impact">Impact</option>
+              </select>
+            </div>
+
+            <div class="control-group-row">
+              <div class="control-group">
+                <label for="font-size-slider" class="control-label">Font Size (% height)</label>
+                <input type="range" id="font-size-slider" min="1.0" max="10.0" step="0.05" value="4.31" class="form-slider">
+                <div class="slider-val"><span id="font-size-val">4.31</span>%</div>
+              </div>
+              <div class="control-group checkbox-row flex-end">
+                <input type="checkbox" id="font-bold-check">
+                <label for="font-bold-check" class="control-label inline">Bold</label>
+              </div>
+            </div>
+
+            <div class="control-group checkbox-row">
+              <input type="checkbox" id="aliasing-check" checked>
+              <label for="aliasing-check" class="control-label inline">Camera Aliased Mode (Sharp borders)</label>
+            </div>
+          </fieldset>
+
+          <!-- Spacing & Spacers -->
+          <fieldset class="settings-fieldset">
+            <legend>Monospace & Alignment</legend>
+
+            <div class="control-group">
+              <label for="cell-width-slider" class="control-label">Character Cell Width (% font size)</label>
+              <input type="range" id="cell-width-slider" min="20.0" max="100.0" step="0.5" value="58.8" class="form-slider">
+              <div class="slider-val"><span id="cell-width-val">58.8</span>%</div>
+            </div>
+
+            <div class="control-group">
+              <label for="special-offset-slider" class="control-label">Period/Colon Offset (% font size)</label>
+              <input type="range" id="special-offset-slider" min="0.0" max="50.0" step="0.5" value="20.0" class="form-slider">
+              <div class="slider-val"><span id="special-offset-val">20.0</span>%</div>
+            </div>
+          </fieldset>
+
+          <!-- Stroke & Colors -->
+          <fieldset class="settings-fieldset">
+            <legend>Colors & Outline</legend>
+
+            <div class="color-picker-row">
+              <div class="control-group">
+                <label for="fill-color" class="control-label">Fill Color</label>
+                <div class="color-input-wrapper">
+                  <input type="color" id="fill-color" value="#fc6405" class="form-color">
+                  <input type="text" id="fill-color-hex" value="#fc6405" class="form-input text-xs">
+                </div>
+              </div>
+
+              <div class="control-group">
+                <label for="stroke-color" class="control-label">Outline Color</label>
+                <div class="color-input-wrapper">
+                  <input type="color" id="stroke-color" value="#000000" class="form-color">
+                  <input type="text" id="stroke-color-hex" value="#000000" class="form-input text-xs">
+                </div>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label for="stroke-width-slider" class="control-label">Outline Width (% font size)</label>
+              <input type="range" id="stroke-width-slider" min="0.0" max="10.0" step="0.5" value="1.83" class="form-slider">
+              <div class="slider-val"><span id="stroke-width-val">1.83</span>%</div>
+            </div>
+          </fieldset>
+
+          <!-- Placement -->
+          <fieldset class="settings-fieldset">
+            <legend>Placement</legend>
+
+            <div class="control-group">
+              <label for="position-select" class="control-label">Corner Anchor</label>
+              <select id="position-select" class="form-select">
+                <option value="bottom-right">Bottom-Right</option>
+                <option value="bottom-left">Bottom-Left</option>
+                <option value="top-right">Top-Right</option>
+                <option value="top-left">Top-Left</option>
+              </select>
+            </div>
+
+            <div class="control-group-row">
+              <div class="control-group">
+                <label for="margin-x-slider" class="control-label">Horizontal Margin (% width)</label>
+                <input type="range" id="margin-x-slider" min="0.0" max="20.0" step="0.1" value="4.45" class="form-slider">
+                <div class="slider-val"><span id="margin-x-val">4.45</span>%</div>
+              </div>
+              <div class="control-group">
+                <label for="margin-y-slider" class="control-label">Vertical Margin (% height)</label>
+                <input type="range" id="margin-y-slider" min="0.0" max="25.0" step="0.1" value="9.03" class="form-slider">
+                <div class="slider-val"><span id="margin-y-val">9.03</span>%</div>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <!-- Action Panel -->
+        <div class="action-panel">
+          <button id="download-current-btn" class="primary-btn flex-1" disabled>Burn & Download Current</button>
+          <button id="download-all-btn" class="accent-btn" disabled>Batch Process & Zip</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal for Custom Presets -->
+    <div id="save-preset-modal" class="modal hidden">
+      <div class="modal-content glass-panel">
+        <h3 class="modal-title">Save Custom Preset</h3>
+        <div class="control-group">
+          <label for="preset-name-input" class="control-label">Preset Name</label>
+          <input type="text" id="preset-name-input" class="form-input" placeholder="My Cool Camera Style">
+        </div>
+        <div class="modal-actions">
+          <button id="cancel-preset-btn" class="secondary-btn">Cancel</button>
+          <button id="confirm-preset-btn" class="primary-btn">Save Preset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

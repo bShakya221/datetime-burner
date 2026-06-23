@@ -1,0 +1,19 @@
+# Ignore images and zip files
+*.jpg
+*.JPG
+*.jpeg
+*.JPEG
+*.png
+*.PNG
+*.zip
+
+# Ignore backup files
+*_original.jpg
+*_burned.jpg
+*_crop.png
+
+# System folders
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
