@@ -1,0 +1,42 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.bishal.pavenote'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'com.bishal.pavenote'
+        minSdk 31
+        targetSdk 36
+        versionCode 1
+        versionName '0.1.0'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+tasks.register('verifyNoInternetPermission') {
+    doLast {
+        def manifest = file('src/main/AndroidManifest.xml').text
+        if (manifest.contains('android.permission.INTERNET')) {
+            throw new GradleException('INTERNET permission is forbidden')
+        }
+    }
+}
+preBuild.dependsOn verifyNoInternetPermission
+
+dependencies {
+    implementation 'androidx.core:core:1.17.0'
+    testImplementation 'junit:junit:4.13.2'
+}
