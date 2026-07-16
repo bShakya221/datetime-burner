@@ -13,11 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restore Android source bundle
-        run: |
-          base64 -d pavenote-android.tar.gz.b64 > /tmp/pavenote.tar.gz
-          tar -xzf /tmp/pavenote.tar.gz
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
