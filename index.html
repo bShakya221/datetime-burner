@@ -6,7 +6,9 @@
   <title>Retro Photo Timestamp Burner</title>
   <link rel="stylesheet" href="style.css">
   <!-- Load exifr library to parse EXIF tags in browser -->
-  <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
+  <!-- Load heic2any library to convert HEIC/HEIF images in browser -->
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <!-- Load jszip library to create zip files in browser -->
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <!-- Google Fonts for premium icons and fonts -->
@@ -39,11 +41,11 @@
         
         <!-- Upload Dropzone -->
         <div id="dropzone" class="dropzone">
-          <input type="file" id="file-input" multiple accept="image/jpeg,image/png" class="file-input">
+          <input type="file" id="file-input" multiple accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif" class="file-input">
           <div class="dropzone-content">
             <span class="upload-icon">📤</span>
             <p>Drag & Drop images or <span class="browse-link">Browse</span></p>
-            <span class="subtext">Supports JPEG and PNG files</span>
+            <span class="subtext">Supports JPEG, PNG, and HEIC files</span>
           </div>
         </div>
 

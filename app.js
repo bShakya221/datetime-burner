@@ -388,32 +388,60 @@ async function handleFiles(files) {
   
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    if (!file.type.startsWith('image/')) continue;
+    const isHeic = Boolean(file.name.match(/\.(heic|heif)$/i) || file.type.includes('heic') || file.type.includes('heif'));
+    if (!file.type.startsWith('image/') && !isHeic) continue;
+    
+    let processedBlob = file;
+    let exifDate = null;
+    
+    // Parse exif metadata (supporting multiple tags, including HEIC)
+    try {
+      if (window.exifr) {
+        const meta = await window.exifr.parse(file);
+        if (meta) {
+          const parsedDate = meta.DateTimeOriginal || meta.CreateDate || meta.ModifyDate || meta.DateTime;
+          if (parsedDate) {
+            exifDate = new Date(parsedDate);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('EXIF parse error for file ' + file.name, e);
+    }
+
+    // Convert HEIC to renderable JPEG Blob if needed
+    if (isHeic) {
+      try {
+        if (window.heic2any) {
+          const conversionResult = await window.heic2any({
+            blob: file,
+            toType: 'image/jpeg',
+            quality: 0.92
+          });
+          processedBlob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult;
+        } else {
+          console.warn('heic2any library not loaded');
+        }
+      } catch (e) {
+        console.error('HEIC conversion failed for ' + file.name, e);
+        alert(`Could not convert HEIC file: ${file.name}`);
+        continue;
+      }
+    }
+
+    const imageUrl = URL.createObjectURL(processedBlob);
     
     const item = {
       file: file,
       name: file.name,
       size: formatBytes(file.size),
       processed: false,
-      imageUrl: URL.createObjectURL(file),
-      exifDate: null,
+      imageUrl: imageUrl,
+      exifDate: exifDate,
       previewCanvas: null,
       width: 0,
       height: 0
     };
-    
-    // Parse exif metadata (supporting multiple tags)
-    try {
-      const meta = await window.exifr.parse(file);
-      if (meta) {
-        const exifDate = meta.DateTimeOriginal || meta.CreateDate || meta.ModifyDate || meta.DateTime;
-        if (exifDate) {
-          item.exifDate = new Date(exifDate);
-        }
-      }
-    } catch (e) {
-      console.warn('EXIF parse error for file ' + file.name, e);
-    }
     
     // Load image to create scaled down preview canvas
     await new Promise((resolve) => {
@@ -447,7 +475,8 @@ async function handleFiles(files) {
         
         resolve();
       };
-      img.onerror = () => {
+      img.onerror = (e) => {
+        console.error('Failed to load image element for ' + file.name, e);
         resolve();
       };
     });
